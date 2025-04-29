@@ -13,8 +13,8 @@ public class KTimerMessage {
     private String taskId;
     private KTimerTaskContext context;
 
-    public static KTimerMessage createClientRegisterMessage() {
-        return new KTimerMessage(null, MessageType.CLIENT_REGISTER, "REGISTRY", null);
+    public static KTimerMessage createClientRegisterMessage(String clientId) {
+        return new KTimerMessage(clientId, MessageType.CLIENT_REGISTER, "REGISTRY", null);
     }
     public static KTimerMessage createScheduleTaskMessage(String clientId, String taskId, KTimerTaskContext context) {
         if (clientId == null || clientId.isEmpty()){

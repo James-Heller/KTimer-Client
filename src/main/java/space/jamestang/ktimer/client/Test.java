@@ -9,12 +9,29 @@ import space.jamestang.ktimer.client.datatype.KTimerTaskContext;
 import space.jamestang.ktimer.client.datatype.MessageType;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.function.Function;
 
 public class Test{
     private static final Logger log = LoggerFactory.getLogger(Test.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        var client = getKTimerClient();
+        client.setHandler(new KTimerCallBackHandler() {
+            @Override
+            public KTimerMessage onTaskTrigger(KTimerMessage message) {
+                return new KTimerMessage(message.getClientId(), MessageType.TASK_RECEIVED, message.getTaskId(), null);
+            }
+        });
+
+        client.connect();
+
+        KTimerMessage cancelOrder = new KTimerMessage(null, MessageType.SCHEDULE_TASK, String.valueOf(new Random().nextInt()), new KTimerTaskContext("",1L));
+        client.sendTask(cancelOrder);
+        log.info("task added");
+    }
+
+    private static KTimerClient getKTimerClient() {
         ObjectMapper mapper = new ObjectMapper();
 
         Function<KTimerMessage, byte[]> encoder = (KTimerMessage message) -> {
@@ -33,19 +50,6 @@ public class Test{
             }
         };
 
-        var client = new KTimerClient("localhost", 4396, encoder, decoder);
-        client.setHandler(new KTimerCallBackHandler() {
-            @Override
-            public KTimerMessage onTaskTrigger(KTimerMessage message) {
-                System.out.println("Task triggered: " + message);
-                return new KTimerMessage(message.getClientId(), MessageType.TASK_RECEIVED, message.getTaskId(), null);
-            }
-        });
-
-        client.connect();
-
-        KTimerMessage cancelOrder = new KTimerMessage(null, MessageType.SCHEDULE_TASK, "AllTaken-1123", new KTimerTaskContext("",1L));
-        client.sendTask(cancelOrder);
-        log.info("task added");
+        return new KTimerClient("192.168.1.222", 4396, encoder, decoder);
     }
 }

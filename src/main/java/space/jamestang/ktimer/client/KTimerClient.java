@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,8 +54,9 @@ public class KTimerClient {
             if (clientId == null) {
                 if (Files.exists(clientIdPath)) {
                     clientId = Files.readString(clientIdPath);
+                    registry(clientId);
                 } else {
-                    registry();
+                    registry(null);
                 }
             }
             startMessageListener();
@@ -77,8 +79,8 @@ public class KTimerClient {
         }
     }
 
-    private void registry() {
-        var msg = KTimerMessage.createClientRegisterMessage();
+    public void registry(String clientId) {
+        var msg = KTimerMessage.createClientRegisterMessage(clientId);
         var payload = messageEncoder.apply(msg);
         try {
             output.writeInt(payload.length);
@@ -89,11 +91,12 @@ public class KTimerClient {
             byte[] buffer = new byte[length];
             input.readFully(buffer);
             var response = messageDecoder.apply(buffer);
+            log.info(LocalDateTime.now().toString());
             if (response.getType() == MessageType.TASK_RECEIVED) {
-                clientId = response.getClientId();
+                this.clientId = response.getClientId();
                 // 统一使用 writeString 写入（支持文件不存在时自动创建）
-                Files.writeString(Path.of("clientId.txt"), clientId, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-                log.info("Client registered successfully with ID: {}", clientId);
+                Files.writeString(Path.of("clientId.txt"), this.clientId, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                log.info("Client registered successfully with ID: {}", this.clientId);
             } else {
                 log.error("Failed to register client: {}", response);
             }
@@ -139,20 +142,10 @@ public class KTimerClient {
             } finally {
                 if (running.get()) {
                     log.error("Connection to server lost, attempting to reconnect...");
-                    reconnect();
                 }
             }
         });
     }
 
-    private void reconnect() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-            }
-            connect();
-        } catch (IOException e) {
-            log.error("Failed to reconnect to server: {}", e.getMessage(), e);
-        }
-    }
+
 }
