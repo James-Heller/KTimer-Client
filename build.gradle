@@ -10,8 +10,18 @@ repositories {
 }
 
 dependencies {
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.19.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.0'
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor('org.projectlombok:lombok:1.18.38')
+
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    testCompileOnly("org.projectlombok:lombok:1.18.38")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.38")
+    testImplementation 'ch.qos.logback:logback-classic:1.5.13'
 }
 
 test {
