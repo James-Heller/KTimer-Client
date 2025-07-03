@@ -1,5 +1,6 @@
 package space.jamestang.ktimer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,15 +20,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 
 @Slf4j
 public class KTimerClient {
 
-    @NonNull
-    private final Function<KTimerMessage, byte[]> messageEncoder;
-    @NonNull
-    private final Function<byte[], KTimerMessage> messageDecoder;
+
+    private final ObjectMapper serializer = new ObjectMapper().findAndRegisterModules();
+
     @NonNull
     private final String host;
     @NonNull
@@ -65,8 +64,6 @@ public class KTimerClient {
     /**
      * Constructor for KTimerClient.
      *
-     * @param messageEncoder serialization provider for KTimerMessage. from KTimerMessage to json bytes.
-     * @param messageDecoder deserialization provider for KTimerMessage. from json bytes to KTimerMessage.
      * @param host           the host of the KTimer server
      * @param port           the port of the KTimer server
      * @param clientId       the unique identifier for the client
@@ -74,16 +71,13 @@ public class KTimerClient {
      * @param serviceName    the name of the service this client is associated with
      */
     public KTimerClient(
-            @NonNull Function<KTimerMessage, byte[]> messageEncoder,
-            @NonNull Function<byte[], KTimerMessage> messageDecoder,
             @NonNull String host,
             @NonNull Integer port,
             @NonNull String clientId,
             @NonNull String instanceId,
             @NonNull String serviceName
     ) {
-        this.messageEncoder = messageEncoder;
-        this.messageDecoder = messageDecoder;
+
         this.host = host;
         this.port = port;
         this.clientId = clientId;
@@ -116,7 +110,7 @@ public class KTimerClient {
 
         var registerData = MessageBuilder.INSTANCE.createClientRegister(clientId, instanceId, serviceName, version, metaData);
 
-        byte[] encodedMessage = messageEncoder.apply(registerData);
+        byte[] encodedMessage = serializer.writeValueAsBytes(registerData);
 
         sendMessage(encodedMessage);
 
@@ -206,7 +200,7 @@ public class KTimerClient {
             System.out.println(payload.getClass().getName());
             final var taskData = MessageBuilder.INSTANCE.createTimerRegister(
                 clientId, uniqueTaskID, delay, payload, payload.getClass().getCanonicalName(), priority, tags);
-            final byte[] encodedMessage = messageEncoder.apply(taskData);
+            final byte[] encodedMessage = serializer.writeValueAsBytes(taskData);
 
             sendMessage(encodedMessage);
 
@@ -272,7 +266,7 @@ public class KTimerClient {
                     var errMsg = MessageBuilder.INSTANCE.createError(clientId, "", e.getLocalizedMessage(), e.toString(), null, null);
                     log.error("Error receiving message: {}", e.getMessage(), e);
                     try {
-                        sendMessage(messageEncoder.apply(errMsg));
+                        sendMessage(serializer.writeValueAsBytes(errMsg));
                     } catch (IOException ex) {
                         if (ex instanceof SocketException) {
                             log.error("Socket error occurred: {}. program will shutdown.", ex.getMessage());
@@ -301,7 +295,7 @@ public class KTimerClient {
                         System.getenv("KTIMER_ENVIRONMENT") != null ? System.getenv("KTIMER_ENVIRONMENT") : "default"
                 );
                 var heartbeatData = MessageBuilder.INSTANCE.createHeartbeat(clientId, instanceId, serviceName, version, clientInfo);
-                sendMessage(messageEncoder.apply(heartbeatData));
+                sendMessage(serializer.writeValueAsBytes(heartbeatData));
             } catch (IOException e) {
                 log.error("Error sending heartbeat: {}", e.getMessage());
             }
@@ -324,6 +318,6 @@ public class KTimerClient {
         int length = in.readInt();
         byte[] data = new byte[length];
         in.readFully(data);
-        return messageDecoder.apply(data);
+        return serializer.readValue(data, KTimerMessage.class);
     }
 }
