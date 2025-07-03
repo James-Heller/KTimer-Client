@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class MessageBuilder {
 
     public static MessageBuilder INSTANCE = new MessageBuilder();
@@ -51,6 +52,7 @@ public class MessageBuilder {
                                              @NonNull String timerId,
                                              @NonNull Long delayMillis,
                                              @NonNull Object payload,
+                                             @NonNull String classInfo,
                                              TimerPriority priority,
                                              Map<String, String> tags) {
         var data = new TimerRegisterData(
@@ -60,6 +62,7 @@ public class MessageBuilder {
         );
         data.setPriority(priority);
         data.setTags(tags);
+        data.setClassInfo(classInfo);
 
         return new KTimerMessage(
                 "1.0",
@@ -75,13 +78,15 @@ public class MessageBuilder {
     public KTimerMessage createTimerCancel(@NonNull String clientId,
                                            @NonNull String timerId,
                                            String reason) {
+        var data = new TimerCancelData(timerId);
+        data.setReason(reason);
         return new KTimerMessage(
                 "1.0",
                 MessageType.TIMER_CANCEL,
                 generateMessageId(),
                 clientId,
                 System.currentTimeMillis(),
-                new TimerCancelData(timerId)
+                data
         );
     }
 
@@ -144,7 +149,7 @@ public class MessageBuilder {
 
         return new KTimerMessage(
                 "1.0",
-                MessageType.ACK,
+                MessageType.ERROR,
                 generateMessageId(),
                 clientId,
                 System.currentTimeMillis(),

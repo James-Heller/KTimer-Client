@@ -18,5 +18,6 @@ public final class TimerRegisterData extends MessageData{
     @Setter
     private TimerPriority priority = TimerPriority.NORMAL;
     private final Object payload;
+    private String classInfo;
     private Map<String, String> tags = null;
 }
