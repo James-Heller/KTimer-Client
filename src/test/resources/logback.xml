@@ -6,10 +6,10 @@
     </appender>
 
     <!-- 默认日志级别 -->
-    <root level="TRACE">
+    <root level="INFO">
         <appender-ref ref="STDOUT" />
     </root>
 
     <!-- 为特定包设置不同的日志级别 -->
-    <logger name="space.jamestang" level="TRACE" />
+    <logger name="space.jamestang" level="INFO" />
 </configuration>
