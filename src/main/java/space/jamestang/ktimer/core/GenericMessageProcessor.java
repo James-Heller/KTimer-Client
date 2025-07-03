@@ -27,10 +27,6 @@ public class GenericMessageProcessor {
         }
     }
 
-
-
-
-
     private void handleACKMessage(AckData msg) {
         // Handle ACK message
         if (msg.getStatus() == AckStatus.SUCCESS) {
@@ -64,7 +60,7 @@ public class GenericMessageProcessor {
         handlerThreadPool.submit(() -> {
             try {
                 //noinspection unchecked
-                ((CallbackHandler<Object> )handler).onCallback(payload, callbackData);
+                ((CallbackHandler<Object>)handler).onCallback(payload, callbackData);
             } catch (Exception e) {
                 log.error("Error processing callback for payload type: {}", payloadType.getName(), e);
                 // Optionally, you can send an error ACK back or handle it accordingly

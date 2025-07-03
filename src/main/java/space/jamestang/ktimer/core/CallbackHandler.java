@@ -6,6 +6,7 @@ public interface CallbackHandler<T> {
 
     /**
      * Handles the callback with the given payload and raw data.
+     * You must throw an exception by yourself if the callback failed.
      * @param payload the data you sent to timer before.
      * @param raw the raw data received from the timer. In case you need to implement your own logic based on the raw data.
      */
