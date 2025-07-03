@@ -197,7 +197,6 @@ public class KTimerClient {
 
         // Create and send task message
         try {
-            System.out.println(payload.getClass().getName());
             final var taskData = MessageBuilder.INSTANCE.createTimerRegister(
                 clientId, uniqueTaskID, delay, payload, payload.getClass().getCanonicalName(), priority, tags);
             final byte[] encodedMessage = serializer.writeValueAsBytes(taskData);
